@@ -4,7 +4,7 @@
 bl_info = {
     "name"        : "Image Batch Converter",
     "author"      : "Andree Markefors",
-    "blender"     : (3, 1, 0),
+    "blender"     : (4, 4, 0),
     "version"     : (0, 1),
     "location"    : "Output Properties",
     "description" : "Batch convert image file formats",
@@ -12,6 +12,7 @@ bl_info = {
 }
 
 import bpy
+import os
 from os import listdir
 from os.path import join, isdir, isfile
 
@@ -62,6 +63,10 @@ class batch_convert(bpy.types.Operator):
             f for f in listdir( source ) if isfile( join( source, f ) )
         ]
 
+        if not sourceImgs:
+            self.report({'ERROR'}, "No images found in source folder")
+            return {'CANCELLED'}
+
         bpy.ops.image.open(
             filepath      = join( source, sourceImgs[0] ),
             directory     = source,
@@ -81,8 +86,9 @@ class batch_convert(bpy.types.Operator):
                 scale.inputs[ axis ].default_value = p
 
         for f in sourceImgs:
-            newname           = props.prefix + f[:-4] + props.suffix + extension
+            newname           = props.prefix + os.path.splitext(f)[0] + props.suffix + extension
             img.filepath      = join( source, f )
+            img.reload()
             S.render.filepath = join( destination, newname )
 
             if props.keepOriginalRes:
@@ -176,3 +182,6 @@ def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
     del bpy.types.Scene.batch_convertor_properties
+
+if __name__ == "__main__":
+    register()
